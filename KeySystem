@@ -1,1 +1,90 @@
+local json = require("json")  -- Ensure you have a JSON library
 
+-- Function to generate a random key
+local function generateRandomKey()
+    local chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    local key = ''
+    for i = 1, 20 do
+        local index = math.random(1, #chars)
+        key = key .. chars:sub(index, index)
+        if i % 5 == 0 and i < 20 then
+            key = key .. '-'  -- Add a hyphen after every 5 characters
+        end
+    end
+    return key
+end
+
+-- Define initial keys
+local keys = {
+    ["permanent"] = generateRandomKey(),  -- This key never expires
+    ["weekly"] = generateRandomKey(),      -- This key resets every week
+    ["monthly"] = generateRandomKey()      -- This key resets every month
+}
+
+local lastWeeklyReset = os.time()
+local lastMonthlyReset = os.time()
+
+-- Function to reset the weekly key
+local function resetWeeklyKey()
+    keys["weekly"] = generateRandomKey()  -- Generate a new random key
+    lastWeeklyReset = os.time()
+    print("Weekly key has been reset to: " .. keys["weekly"])
+end
+
+-- Function to reset the monthly key
+local function resetMonthlyKey()
+    keys["monthly"] = generateRandomKey()  -- Generate a new random key
+    lastMonthlyReset = os.time()
+    print("Monthly key has been reset to: " .. keys["monthly"])
+end
+
+-- Function to check and reset keys
+local function checkAndResetKeys()
+    local currentTime = os.time()
+    
+    -- Check for weekly reset (every 604800 seconds = 7 days)
+    if currentTime - lastWeeklyReset >= 604800 then
+        resetWeeklyKey()
+    end
+    
+    -- Check for monthly reset (every 2592000 seconds = 30 days)
+    if currentTime - lastMonthlyReset >= 2592000 then
+        resetMonthlyKey()
+    end
+end
+
+-- Function to validate keys
+local function validateKey(username, inputKey)
+    if username == "permanent" and inputKey == keys["permanent"] then
+        return true
+    elseif username == "weekly" and inputKey == keys["weekly"] then
+        return true
+    elseif username == "monthly" and inputKey == keys["monthly"] then
+        return true
+    else
+        return false
+    end
+end
+
+-- Function to open a GitHub repository
+local function openGitHubRepository()
+    local repoURL = "https://github.com/yourusername/yourrepository"  -- Replace with your repo URL
+    os.execute("start " .. repoURL)  -- For Windows
+    -- For Mac, use: os.execute("open " .. repoURL)
+    -- For Linux, use: os.execute("xdg-open " .. repoURL)
+end
+
+-- Example usage
+checkAndResetKeys()  -- Call this periodically in your script
+
+-- Simulated user input
+local username = "weekly"  -- Example: user input for username
+local inputKey = "user_input_key"  -- Example: user input for key
+
+-- Validate the key
+if validateKey(username, inputKey) then
+    print("Access granted!")
+    openGitHubRepository()  -- Open the GitHub repository
+else
+    print("Access denied!")
+end
